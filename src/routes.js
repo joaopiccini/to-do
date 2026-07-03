@@ -1,72 +1,83 @@
 const express = require("express");
-const { todos } = require("./data/memory");
-const { middlewareDeAutenticacao } = require("./middlewares")
+const { conectarBancoDeDados } = require("./data/connection");
 
 const router = express.Router()
 
-router.get('/todos', middlewareDeAutenticacao, (req, res) => {
+router.get('/tarefas', async (req, res) => {
+    const bancoDeDados = await conectarBancoDeDados();
+
+    const tarefas = await bancoDeDados.all("SELECT * FROM tarefas")
+
     return res.status(200).json({
-        tarefas: todos
+        tarefas: tarefas
     })
 })
 
-router.post('/todos', (req, res) => {
-    const { titulo } = req.body;
+router.post('/tarefas', async (req, res) => {
+    const { titulo, descricao } = req.body;
 
     if (!titulo) {
         return res.status(400).json({ mensagem: "Titulo é obrigatório"})
     }
 
-    for (let i = 2; i < todos.length; i++) {
-        if (titulo === todos[i].titulo) {
-            todos[i] 
-        }
-    }
+    const bancoDeDados = await conectarBancoDeDados();
 
     const novaTarefa = {
-        id: new Date().toString(),
         titulo,
         descricao,
         feito: false
     }
 
-    todos.push(novaTarefa)
+    await bancoDeDados.run(
+        "INSERT INTO tarefas(titulo, descricao, feito) VALUES(?, ?, ?)", 
+        [novaTarefa.titulo, novaTarefa.descricao, novaTarefa.feito]
+    )
 
-    return res.status(201).json({ 
+    return res.status(201).json({
         mensagem: "Tarefa criada com sucesso",
         tarefaCriada: novaTarefa
     })
 })
 
-router.put('/todos/:id', (req, res) => {
+router.put('/tarefas/:id', async (req, res) => {
     const { id } = req.params;
     const { titulo, descricao, feito } = req.body;
 
-    for (let i = 0; i < todos.length; i++) {
-        if (todos[i].id === id) {
-            todos[i].titulo = titulo || todos[i].titulo;
-            todos[i].descricao = descricao || todos[i].descricao;
-            todos[i].feito = feito !== undefined ? feito : todos[i].feito;
-        }
+    const bancoDeDados = await conectarBancoDeDados();
+
+    const tarefaSolicitadaPeloUsuario = await bancoDeDados.all("SELECT * FROM tarefas WHERE id = ?", [id]);
+
+    if (!tarefaSolicitadaPeloUsuario) {
+        return res.status(400).json({ mensagem: "Tarefa não existe"})
     }
+
+    const tituloVerificado = !titulo ? tarefaSolicitadaPeloUsuario.titulo : titulo
+    const descricaoVerificado = !descricao ? tarefaSolicitadaPeloUsuario.descricao : descricao
+    const feitoVerificado = !feito ? tarefaSolicitadaPeloUsuario.feito : feito
+
+    await bancoDeDados.run(
+        "UPDATE tarefas SET titulo = ?, descricao = ?, feito = ? WHERE id = ?",
+        [tituloVerificado, descricaoVerificado, feitoVerificado, id]
+    )
 
     return res.status(200).json({
         mensagem: "Tarefa atualizada com sucesso",
-        tarefaAtualizada: tarefa
+        tarefaAtualizada: {
+            titulo: tituloVerificado,
+            descricao: descricaoVerificado,
+            feito: feitoVerificado
+        }
     })
 })
 
-router.delete('/todos/:id', (req, res) => {
+router.delete('/tarefas/:id', async (req, res) => {
     const { id } = req.params;
 
-    for (let i = 0; i < todos.length; i++) {
-        if (todos[i].id === id) {
-            todos.splice(i, 1);
-            return res.status(200).json({ mensagem: "Tarefa deletada com sucesso" });
-        }
-    }
+    const bancoDeDados = await conectarBancoDeDados();
 
-    return res.status(404).json({ mensagem: "Tarefa não encontrada" });
+    await bancoDeDados.run("DELETE FROM tarefas WHERE id = ?", [id])
+
+    return res.status(200).json({ mensagem: "Tarefa deletada" });
 })
 
 module.exports = router;
