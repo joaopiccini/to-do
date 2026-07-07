@@ -1,5 +1,5 @@
 const express = require("express");
-const { conectarBancoDeDados } = require("./data/connection");
+const { conectarBancoDeDados } = require("./db/connection");
 
 const router = express.Router()
 

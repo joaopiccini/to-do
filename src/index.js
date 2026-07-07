@@ -1,7 +1,7 @@
 const express = require("express");
 const app = express();
 const rotas = require("./routes");
-const { conectarBancoDeDados } = require("./data/connection");
+const { conectarBancoDeDados } = require("./db/connection");
 const { middlewareDeAutenticacao } = require("./middlewares");
 
 conectarBancoDeDados()
