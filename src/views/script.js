@@ -10,9 +10,37 @@ async function buscarTarefas() {
     const response = await fetch("/tarefas");
 
     if (response.ok) {
-        const dados = await response.json();
-        return dados;
+        const { tarefas } = await response.json();
+        return tarefas;
     }
 
     return [];
 };
+
+async function renderizarTarefas() {
+    const tarefas = await buscarTarefas();
+
+    let html = tarefas.length === 0
+        ? `<li class="estado-vazio">Nenhuma tarefa encontrada.</li>`
+        : "";
+
+    for (const tarefa of tarefas) {
+        html += `
+            <li class="item-tarefa">
+                <div class="conteudo-tarefa">
+                    <strong class="titulo-tarefa">${tarefa.titulo}</strong>
+                    <p class="descricao-tarefa">${tarefa.descricao}</p>
+                    <p class="meta-tarefa">ID: ${tarefa.id}</p>
+                </div>
+                <div class="acoes-tarefa">
+                    <button type="button" class="botao-editar">Editar</button>
+                    <button type="button" class="botao-excluir">Excluir</button>
+                </div>
+            </li>
+        `;
+    }
+
+    listaTarefas.innerHTML = html;
+};
+
+renderizarTarefas()
