@@ -17,6 +17,28 @@ async function buscarTarefas() {
     return [];
 };
 
+async function criarTarefa() {
+      const payload = {
+        titulo: campoTitulo.value,
+        descricao: campoDescricao.value
+      }
+
+      const response = await fetch("/tarefas", {
+        method: "POST",
+        body: JSON.stringify(payload)
+      })
+
+    if (response.ok) {
+        const { mensagem, tarefaCriada } = await response.json();
+
+        alert(mensagem);
+
+        return tarefaCriada;
+    }
+
+    return {};
+}
+
 async function renderizarTarefas() {
     const tarefas = await buscarTarefas();
 
