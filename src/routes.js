@@ -33,9 +33,12 @@ router.post('/tarefas', async (req, res) => {
         [novaTarefa.titulo, novaTarefa.descricao, novaTarefa.feito]
     )
 
+    const tarefaCriada = await bancoDeDados.all("SELECT * FROM tarefas WHERE titulo = ?", [novaTarefa.titulo]);
+
+
     return res.status(201).json({
         mensagem: "Tarefa criada com sucesso",
-        tarefaCriada: novaTarefa
+        tarefaCriada: tarefaCriada[0]
     })
 })
 
@@ -47,13 +50,13 @@ router.put('/tarefas/:id', async (req, res) => {
 
     const tarefaSolicitadaPeloUsuario = await bancoDeDados.all("SELECT * FROM tarefas WHERE id = ?", [id]);
 
-    if (!tarefaSolicitadaPeloUsuario) {
+    if (!tarefaSolicitadaPeloUsuario[0]) {
         return res.status(400).json({ mensagem: "Tarefa não existe"})
     }
 
-    const tituloVerificado = !titulo ? tarefaSolicitadaPeloUsuario.titulo : titulo
-    const descricaoVerificado = !descricao ? tarefaSolicitadaPeloUsuario.descricao : descricao
-    const feitoVerificado = !feito ? tarefaSolicitadaPeloUsuario.feito : feito
+    const tituloVerificado = !titulo ? tarefaSolicitadaPeloUsuario[0].titulo : titulo
+    const descricaoVerificado = !descricao ? tarefaSolicitadaPeloUsuario[0].descricao : descricao
+    const feitoVerificado = !feito ? tarefaSolicitadaPeloUsuario[0].feito : feito
 
     await bancoDeDados.run(
         "UPDATE tarefas SET titulo = ?, descricao = ?, feito = ? WHERE id = ?",
